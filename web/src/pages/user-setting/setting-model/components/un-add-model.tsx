@@ -47,6 +47,59 @@ export const AvailableModels: FC<{
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   const filteredModels = useMemo(() => {
+    // Models to exclude from the list
+    const excludedModels = [
+      'OpenAI',
+      'Gemini',
+      'xAI',
+      'TokenPony',
+      'ModelScope',
+      'OpenAI-API-Compatible',
+      'VLLM',
+      'FastEmbed',
+      'Xinference',
+      'VolcEngine',
+      'BaiChuan',
+      'Jina',
+      'Builtin',
+      'MiniMax',
+      'Mistral',
+      'Azure-OpenAI',
+      'Bedrock',
+      'Groq',
+      'OpenRouter',
+      'StepFun',
+      'NVIDIA',
+      'LM-Studio',
+      'Cohere',
+      'TogetherAI',
+      'Upstage',
+      'NovitaAI',
+      'SILICONFLOW',
+      'PPIO',
+      'Replicate',
+      'Tencent Hunyuan',
+      'XunFei Spark',
+      'BaiduYiyan',
+      'Fish Audio',
+      'Tencent Cloud',
+      'Anthropic',
+      'Voyage AI',
+      'GiteeAI',
+      'Google Cloud',
+      'HuggingFace',
+      'GPUStack',
+      'DeepInfra',
+      '302.AI',
+      'CometAPI',
+      'LongCat',
+      'DeerAPI',
+      'Jiekou.AI',
+      'MinerU',
+      'LocalAI',
+      'ZHIPU-AI',
+    ];
+    // const excludedModels = ['OpenAI'];
     const models = factoryList.filter((model) => {
       const matchesSearch = model.name
         .toLowerCase()
@@ -54,7 +107,10 @@ export const AvailableModels: FC<{
       const matchesTag =
         selectedTag === null ||
         model.tags.split(',').some((tag) => tag.trim() === selectedTag);
-      return matchesSearch && matchesTag;
+      const isNotExcluded = !excludedModels.includes(model.name);
+
+      return matchesSearch && matchesTag && isNotExcluded;
+      // return matchesSearch && matchesTag;
     });
     return models;
   }, [factoryList, searchTerm, selectedTag]);

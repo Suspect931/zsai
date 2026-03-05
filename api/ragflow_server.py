@@ -75,15 +75,10 @@ if __name__ == '__main__':
     faulthandler.enable()
     init_root_logger("ragflow_server")
     logging.info(r"""
-        ____   ___    ______ ______ __
-       / __ \ /   |  / ____// ____// /____  _      __
-      / /_/ // /| | / / __ / /_   / // __ \| | /| / /
-     / _, _// ___ |/ /_/ // __/  / // /_/ /| |/ |/ /
-    /_/ |_|/_/  |_|\____//_/    /_/ \____/ |__/|__/
-
+    ZSAI
     """)
     logging.info(
-        f'RAGFlow version: {get_ragflow_version()}'
+        f'version: {get_ragflow_version()}'
     )
     logging.info(
         f'project base: {get_project_base_directory()}'

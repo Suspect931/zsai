@@ -1,7 +1,6 @@
 import { CardSineLineContainer } from '@/components/card-singleline-container';
 import { EmptyCardType } from '@/components/empty/constant';
 import { EmptyAppCard } from '@/components/empty/empty';
-import { HomeIcon } from '@/components/svg-icon';
 import { Segmented, SegmentedValue } from '@/components/ui/segmented';
 import { Routes } from '@/routes';
 import { useCallback, useMemo, useState } from 'react';
@@ -45,8 +44,8 @@ export function Applications() {
   const options = useMemo(
     () => [
       { value: Routes.Chats, label: t('chat.chatApps') },
-      { value: Routes.Searches, label: t('search.searchApps') },
-      { value: Routes.Agents, label: t('header.flow') },
+      // { value: Routes.Searches, label: t('search.searchApps') },
+      // { value: Routes.Agents, label: t('header.flow') },
     ],
     [t],
   );
@@ -60,13 +59,13 @@ export function Applications() {
   return (
     <section className="mt-12">
       <div className="flex justify-between items-center mb-5">
-        <h2 className="text-2xl font-semibold flex gap-2.5">
+        {/* <h2 className="text-2xl font-semibold flex gap-2.5">
           <HomeIcon
             name={`${IconMap[val as keyof typeof IconMap]}`}
             width={'32'}
           />
           {options.find((x) => x.value === val)?.label}
-        </h2>
+        </h2> */}
         <Segmented
           options={options}
           value={val}

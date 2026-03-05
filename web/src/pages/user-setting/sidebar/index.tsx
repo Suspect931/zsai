@@ -12,18 +12,19 @@ import {
 import { cn } from '@/lib/utils';
 import { Routes } from '@/routes';
 import { TFunction } from 'i18next';
-import { Banknote, Box, Server, Unplug, User, Users } from 'lucide-react';
+import { Box, User, Users } from 'lucide-react';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useHandleMenuClick } from './hooks';
 
 const menuItems = (t: TFunction) => [
-  { icon: Server, label: t('setting.dataSources'), key: Routes.DataSource },
+  //屏蔽用户界面左侧菜单中的数据源入口
+  // { icon: Server, label: t('setting.dataSources'), key: Routes.DataSource },
   { icon: Box, label: t('setting.model'), key: Routes.Model },
-  { icon: Banknote, label: 'MCP', key: Routes.Mcp },
+  // { icon: Banknote, label: 'MCP', key: Routes.Mcp },
   { icon: Users, label: t('setting.team'), key: Routes.Team },
   { icon: User, label: t('setting.profile'), key: Routes.Profile },
-  { icon: Unplug, label: t('setting.api'), key: Routes.Api },
+  // { icon: Unplug, label: t('setting.api'), key: Routes.Api },
   // {
   //   icon: MessageSquareQuote,
   //   label: 'Prompt Templates',
@@ -95,9 +96,9 @@ export function SideBar() {
 
       <div className="p-6 mt-auto ">
         <div className="flex items-center gap-2 mb-6 justify-between">
-          <div className="mr-2 px-2 text-accent-primary rounded-md">
+          {/* <div className="mr-2 px-2 text-accent-primary rounded-md">
             {version}
-          </div>
+          </div> */}
           <ThemeToggle />
         </div>
         <Button

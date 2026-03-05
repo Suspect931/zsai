@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>聊天助手 - 本地查看器</title>
+	<style>
+		html,body,#app{height:100%;margin:0;font-family:Segoe UI, Roboto, "Microsoft YaHei", Arial}
+		#app{display:flex;flex-direction:row}
+		.sidebar{width:320px;border-right:1px solid #e6e6e6;box-sizing:border-box;padding:12px;background:#fafafa;overflow:auto}
+		.main{flex:1;height:100%}
+		.chat-list{list-style:none;padding:0;margin:8px 0}
+		.chat-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:6px;cursor:pointer}
+		.chat-item:hover{background:#f0f0f0}
+		.chat-item.selected{background:#e6f0ff}
+		.avatar{width:36px;height:36px;border-radius:6px;background:#ddd;flex:0 0 36px}
+		.meta{flex:1;min-width:0}
+		.name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+		.snippet{font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+		.unread{background:#ff4d4f;color:#fff;border-radius:999px;padding:2px 8px;font-size:12px}
+		.controls{display:flex;gap:8px;align-items:center}
+		.search{width:100%;padding:8px;border:1px solid #ddd;border-radius:6px}
+		.small{font-size:12px;color:#888}
+		.footer{margin-top:12px;font-size:12px;color:#666}
+		iframe{width:100%;height:100%;border:0}
+		.loading{padding:8px;color:#666}
+	</style>
+</head>
+<body>
+	<div id="app">
+		<aside class="sidebar">
+			<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+				<input id="searchInput" class="search" placeholder="搜索聊天 (name)" />
+			</div>
+			<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+			<input id="apiKeyInput" type="password" placeholder="在此输入 API Key（可选）" value="ragflow-E2MjUxNWQ4YjhhZTExZjBiMGQyZTM3ZD" title="已预填 API Key" autocomplete="off" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:6px" />
+				<button id="refreshBtn" title="刷新列表" style="padding:8px 10px">刷新</button>
+			</div>
+			<div id="listContainer">
+				<div id="loading" class="loading">加载聊天列表中…</div>
+				<ul id="chatList" class="chat-list" hidden></ul>
+				<div id="empty" class="small" hidden>没有聊天。请确保后端运行并允许 CORS，或手动添加 shared_id.</div>
+			</div>
+			<div class="footer">
+				<div class="small">提示：点击聊天可更新右侧预览（iframe）的 shared_id 与 auth 参数。</div>
+				<div class="small">如果后端支持，请确保允许来自此页面的跨域请求（CORS），并将 API Key 填入上方输入框。</div>
+			</div>
+		</aside>
+		<main class="main">
+			<!-- 右侧 iframe：保留原始查询参数模板，脚本将在点击聊天时替换 shared_id 与 auth -->
+			<iframe id="chatFrame"
+				src="http://localhost:9222/next-chats/share?shared_id=1ba286c8b6ef11f0a61cc911a871f69b&from=chat&auth=E2MjUyMTdjYjhhZTExZjBiMGQyZTM3ZD&visible_avatar=1&locale=zh&streaming=true"
+				></iframe>
+		</main>
+	</div>
+
+	<script>
+		// 小工具：解析并替换 URL 中的 shared_id / auth
+		function replaceQueryParams(urlString, params) {
+			try {
+				const url = new URL(urlString);
+				Object.keys(params).forEach(k => {
+					if (params[k] == null) url.searchParams.delete(k);
+					else url.searchParams.set(k, params[k]);
+				});
+				return url.toString();
+			} catch (e) {
+				return urlString; // 回退
+			}
+		}
+
+		const chatListEl = document.getElementById('chatList');
+		const loadingEl = document.getElementById('loading');
+		const emptyEl = document.getElementById('empty');
+		const frame = document.getElementById('chatFrame');
+		const apiKeyInput = document.getElementById('apiKeyInput');
+		const refreshBtn = document.getElementById('refreshBtn');
+		const searchInput = document.getElementById('searchInput');
+
+		let chats = [];
+		let selectedId = null;
+		let controller = null;
+
+		function renderList(filterText = '') {
+			chatListEl.innerHTML = '';
+			const filtered = chats.filter(c => !filterText || (c.name && c.name.toLowerCase().includes(filterText.toLowerCase())));
+			if (filtered.length === 0) {
+				chatListEl.hidden = true;
+				emptyEl.hidden = false;
+				return;
+			}
+			chatListEl.hidden = false;
+			emptyEl.hidden = true;
+			filtered.forEach(item => {
+				const li = document.createElement('li');
+				li.className = 'chat-item' + (item.id === selectedId ? ' selected' : '');
+				li.dataset.id = item.id;
+
+				const avatar = document.createElement('div');
+				avatar.className = 'avatar';
+				if (item.avatar_url) avatar.style.backgroundImage = `url(${item.avatar_url})`, avatar.style.backgroundSize='cover';
+
+				const meta = document.createElement('div');
+				meta.className = 'meta';
+				const name = document.createElement('div');
+				name.className = 'name';
+				name.textContent = item.name || item.id;
+				const snippet = document.createElement('div');
+				snippet.className = 'snippet';
+				snippet.textContent = item.snippet || '';
+				meta.appendChild(name);
+				meta.appendChild(snippet);
+
+				const right = document.createElement('div');
+				if (item.unread_count) {
+					const u = document.createElement('div');
+					u.className = 'unread';
+					u.textContent = String(item.unread_count);
+					right.appendChild(u);
+				}
+
+				li.appendChild(avatar);
+				li.appendChild(meta);
+				li.appendChild(right);
+
+				li.addEventListener('click', () => {
+					selectChat(item);
+				});
+
+				chatListEl.appendChild(li);
+			});
+		}
+
+		function selectChat(item) {
+			selectedId = item.id;
+			// 尝试从 item.auth 或 item.shared_auth 中读取 auth；如果没有，使用现有 iframe 的 auth
+			let auth = item.auth || item.share_auth || null;
+			// 如果 item 中没有 auth，保留 iframe 中原始的 auth 值
+			try {
+				const current = new URL(frame.src);
+				if (!auth) auth = current.searchParams.get('auth');
+			} catch(e){}
+
+			const newSrc = replaceQueryParams(frame.src, { shared_id: item.id, auth: auth });
+			frame.src = newSrc;
+			renderList(searchInput.value);
+		}
+
+		async function loadChats() {
+			// 取消先前请求
+			if (controller) controller.abort();
+			controller = new AbortController();
+			loadingEl.hidden = false;
+			chatListEl.hidden = true;
+			emptyEl.hidden = true;
+			chats = [];
+
+			const apiKey = apiKeyInput.value.trim();
+			// 强制使用本地后端地址，避免 page served on http(s) 导致相对路径请求到错误的后端
+			// 若需要调用不同主机，请修改此常量或在 UI 中添加一个可配置项
+			const url = 'http://localhost:9222/api/v1/chats';
+			try {
+				const headers = new Headers();
+				// headers.set('Accept', 'application/json');
+				if (apiKey) headers.set('Authorization', 'Bearer ' + apiKey);
+				const resp = await fetch(url + '?page=1&page_size=50', {headers });
+				if (!resp.ok) {
+					// 尝试读取响应体以便调试（可能是 HTML 或 JSON 错误信息）
+					let txt = '';
+					try { txt = await resp.text(); } catch(e) { txt = ''; }
+					throw new Error('请求失败: ' + resp.status + ' ' + resp.statusText + (txt ? ' - ' + txt : ''));
+				}
+				const body = await resp.json();
+				// 如果后端使用 { code: number, data: [...] } 风格，并在 code 非 0 时表示错误，抛出具体错误
+				if (typeof body === 'object' && body !== null && typeof body.code !== 'undefined' && body.code !== 0) {
+					const msg = body.message || (body.error || JSON.stringify(body));
+					throw new Error('API 返回错误 code=' + body.code + (msg ? ' message=' + msg : ''));
+				}
+				// 兼容不同后端返回结构：优先 body.data
+						// API 返回格式示例：{ code:0, data: [ { id, name, avatar, description, ... } ] }
+						const items = body && body.data ? body.data : (Array.isArray(body) ? body : []);
+						// map to expected shape from your provided response
+						chats = items.map(i => ({
+							id: i.id || i.chat_id || i.shared_id,
+							name: i.name || i.title || '',
+							// 使用 description 字段作为摘要/片段
+							snippet: i.description || i.snippet || i.last_message || '',
+							// 未读数在该接口中可能不存在，默认 0
+							unread_count: i.unread_count || i.unread || 0,
+							// 兼容 avatar 或 avatar_url
+							avatar_url: i.avatar || i.avatar_url || '',
+							// 如果后端有返回 auth 字段（示例中没有），仍然支持
+							auth: i.auth || i.share_auth || null,
+							// 额外字段保留以备将来使用
+							raw: i
+						})).filter(Boolean);
+				if (chats.length === 0) {
+					loadingEl.hidden = true;
+					emptyEl.hidden = false;
+					return;
+				}
+				loadingEl.hidden = true;
+				renderList(searchInput.value);
+			} catch (err) {
+				if (err.name === 'AbortError') return;
+				console.error(err);
+				loadingEl.textContent = '加载失败：' + (err.message || err);
+			}
+		}
+
+		// 绑定事件
+		refreshBtn.addEventListener('click', loadChats);
+		let searchTimer = null;
+		searchInput.addEventListener('input', () => {
+			clearTimeout(searchTimer);
+			searchTimer = setTimeout(() => renderList(searchInput.value), 200);
+		});
+
+		// 初始加载：尝试调用后端，否则展示空占位。用户也可手动通过控制台或填写 API Key 并点击刷新。
+		(function init(){
+			// 如果需要，也可以将示例聊天写入 'chats' 以便离线测试
+			const sample = [
+				{id:'1ba286c8b6ef11f0a61cc911a871f69b', name:'产品助理', snippet:'上次：请帮我写个产品文案', unread_count:2, auth:'E2MjUyMTdjYjhhZTExZjBiMGQyZTM3ZD'},
+				{id:'2ca386c8b6ef11f0a61cc911a871f70c', name:'销售小助手', snippet:'上次：跟进客户 A', unread_count:0},
+			];
+			// 先把 sample 放入以便页面可点击；随后尝试从后端加载真实数据并覆盖
+			chats = sample;
+			renderList();
+			// 延迟触发真实加载（用户可以填写 API Key 后点击刷新）
+			setTimeout(loadChats, 400);
+		})();
+	</script>
+</body>
+</html>

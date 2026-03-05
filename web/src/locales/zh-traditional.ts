@@ -563,7 +563,7 @@ export default {
       maxTokensMinMessage: '最大標記數不能小於 0。',
       password: '密碼',
       passwordDescription: '請輸入您當前的密碼以更改您的密碼。',
-      model: '模型提供商',
+      model: '模型',
       modelDescription: '在此設置模型參數和 API KEY。',
       team: '團隊',
       api: 'API',

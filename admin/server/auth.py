@@ -79,7 +79,7 @@ def init_default_admin():
             "password": encode_to_base64("admin"),
             "nickname": "admin",
             "is_superuser": True,
-            "email": "admin@ragflow.io",
+            "email": "admin@zsai.io",
             "creator": "system",
             "status": "1",
         }
@@ -142,7 +142,7 @@ def check_admin(username: str, password: str):
             "password": encode_to_base64("admin"),
             "nickname": "admin",
             "is_superuser": True,
-            "email": "admin@ragflow.io",
+            "email": "admin@zsai.io",
             "creator": "system",
             "status": "1",
         }

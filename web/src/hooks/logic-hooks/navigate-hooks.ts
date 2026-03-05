@@ -64,9 +64,9 @@ export const useNavigatePage = () => {
   const navigateToProfile = useCallback(() => {
     navigate(Routes.ProfileSetting);
   }, [navigate]);
-
+  // 点击头像跳转到模型提供商
   const navigateToOldProfile = useCallback(() => {
-    navigate(Routes.UserSetting);
+    navigate(`${Routes.UserSetting}${Routes.Model}`);
   }, [navigate]);
 
   const navigateToChatList = useCallback(() => {

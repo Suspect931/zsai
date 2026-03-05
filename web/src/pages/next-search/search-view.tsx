@@ -16,7 +16,7 @@ import { IReference } from '@/interfaces/database/chat';
 import { cn } from '@/lib/utils';
 import DOMPurify from 'dompurify';
 import { isEmpty } from 'lodash';
-import { BrainCircuit, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ISearchAppDetailProps } from '../next-searches/hooks';
@@ -24,7 +24,6 @@ import PdfDrawer from './document-preview-modal';
 import { ISearchReturnProps } from './hooks';
 import './index.less';
 import MarkdownContent from './markdown-content';
-import MindMapDrawer from './mindmap-drawer';
 import RetrievalDocuments from './retrieval-documents';
 export default function SearchingView({
   setIsSearching,
@@ -92,7 +91,7 @@ export default function SearchingView({
             setIsSearching?.(false);
           }}
         >
-          RAGFlow
+          ZSAI
         </h1>
         <div
           className={cn(
@@ -300,12 +299,12 @@ export default function SearchingView({
         </div>
         {mindMapVisible && (
           <div className="flex-1 h-[88dvh] z-30 ml-32 mt-5">
-            <MindMapDrawer
+            {/* <MindMapDrawer
               visible={mindMapVisible}
               hideModal={hideMindMapModal}
               data={mindMap}
               loading={mindMapLoading}
-            ></MindMapDrawer>
+            ></MindMapDrawer> */}
           </div>
         )}
       </div>
@@ -316,13 +315,13 @@ export default function SearchingView({
         searchData.search_config.query_mindmap && (
           <Popover>
             <PopoverTrigger asChild>
-              <div
+              {/* <div
                 className="rounded-lg h-16 w-16 p-0 absolute top-28 right-3 z-30 border cursor-pointer flex justify-center items-center bg-bg-card"
                 onClick={showMindMapModal}
               >
-                {/* <SvgIcon name="paper-clip" width={24} height={30}></SvgIcon> */}
+                {}
                 <BrainCircuit size={36} />
-              </div>
+              </div> */}
             </PopoverTrigger>
             <PopoverContent className="w-fit">{t('chunk.mind')}</PopoverContent>
           </Popover>
